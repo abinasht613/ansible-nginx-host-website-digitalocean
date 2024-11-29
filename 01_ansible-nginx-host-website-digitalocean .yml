@@ -1,0 +1,53 @@
+---
+- name: Install and Start the service
+  hosts: digital_ocean  #ansible host ip or name
+  vars:
+    - app: nginx
+    - user: "root"
+    - file: "ansible.abinash.in.net"
+
+  tasks:
+  - name: Installing nginx
+    apt:
+      name: "{{ app }}"
+      state: present
+    tags: i-nginx
+
+  - name: Starting the nginx service
+    service:
+      name: "{{ app }}"
+      state: started
+      enabled: true
+    tags: ss-nginx
+  
+  - name: Ensure the directory /path/to/directory exists
+    file:
+      path: /var/www/html/mytut  # The path of the directory to create
+      state: directory
+      mode: '0755'  # Optional: set the permissions for the directory
+
+  - name: Place custom HTML File
+    copy:
+      src: /home/abinash/Downloads/Ansible/tutorials/tut_abi/files/index.html 
+      dest: /var/www/html/mytut/index.html
+    become: true
+
+  - name: Add nginx configuration
+    copy:
+      src: /home/abinash/Downloads/Ansible/tutorials/tut_abi/files/{{ file }}
+      dest: /etc/nginx/sites-available/
+      owner: "{{ user }}"
+      group: root
+      mode: '0644'
+
+  - name: Enable website configuration
+    file:
+      src: /etc/nginx/sites-available/{{ file }}
+      dest: /etc/nginx/sites-enabled/{{ file }}
+      state: link
+
+  - name: Ensure nginx is running
+    systemd:
+      name: nginx
+      state: started
+      enabled: yes
